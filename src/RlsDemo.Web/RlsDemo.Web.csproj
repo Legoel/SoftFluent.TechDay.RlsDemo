@@ -1,0 +1,15 @@
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net6.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Swashbuckle.AspNetCore" Version="6.2.3" />
+    <ProjectReference Include="..\..\..\OptiqFluent\src\common\asapp.core\asapp.core.csproj" />
+    <ProjectReference Include="..\RlsDemo.Context\RlsDemo.Context.csproj" />
+  </ItemGroup>
+
+</Project>
