@@ -31,9 +31,12 @@ namespace RlsDemo.Web.Controllers
 		}
 
 		[HttpGet("{id}")]
-		public ActionResult<SensitiveDatumDto> Get([FromRoute] int id)
+		public ActionResult<Task<SensitiveDatumDto>> Get([FromRoute] int id)
 		{
-			var result = _repository.Get<SensitiveDatum>(sd => sd.Identifier == id);
+			var result = _repository.GetAsync<SensitiveDatum>(sd => sd.Identifier == id)
+				.ContinueWith(task =>
+				{
+				}));
 			if (result is null)
 				return NotFound();
 
@@ -49,9 +52,9 @@ namespace RlsDemo.Web.Controllers
 		}
 
 		[HttpDelete("{id}")]
-		public ActionResult<SensitiveDatumDto> Delete([FromRoute] int id)
+		public ActionResult<bool> Delete([FromRoute] int id)
 		{
-			var result = _repository.Get<SensitiveDatum>(sd => sd.Identifier == id);
+			var result = _repository.DeleteAsync<SensitiveDatum>(sd => sd.Identifier == id);
 			if (result is null)
 				return NotFound();
 
