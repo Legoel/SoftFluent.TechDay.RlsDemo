@@ -6,7 +6,7 @@ using Softfluent.Asapp.Core.Data;
 
 namespace RlsDemo.Web.Controllers
 {
-    [ApiController]
+	[ApiController]
 	[Route("[controller]")]
 	public class SensitiveDataController : ControllerBase
 	{
@@ -31,12 +31,9 @@ namespace RlsDemo.Web.Controllers
 		}
 
 		[HttpGet("{id}")]
-		public ActionResult<Task<SensitiveDatumDto>> Get([FromRoute] int id)
+		public ActionResult<SensitiveDatumDto> Get([FromRoute] int id)
 		{
-			var result = _repository.GetAsync<SensitiveDatum>(sd => sd.Identifier == id)
-				.ContinueWith(task =>
-				{
-				}));
+			var result = _repository.Get<SensitiveDatum>(sd => sd.Identifier == id);
 			if (result is null)
 				return NotFound();
 
@@ -46,19 +43,31 @@ namespace RlsDemo.Web.Controllers
 		[HttpPost]
 		public ActionResult<SensitiveDatumDto> Post([FromBody] SensitiveDatumDto datum)
 		{
-			var model = _mapper.Map<SensitiveDatum>(datum);
-			_repository.Create(model);
-			return Ok(_mapper.Map<SensitiveDatumDto>(model));
+			var entity = _mapper.Map<SensitiveDatum>(datum);
+			_repository.Create(entity);
+			return Ok(_mapper.Map<SensitiveDatumDto>(entity));
+		}
+
+		[HttpPut("{id}")]
+		public ActionResult<SensitiveDatumDto> Put([FromRoute] int id, [FromBody] SensitiveDatumDto datum)
+		{
+			var entity = _mapper.Map<SensitiveDatum>(datum);
+
+			var result = _repository.Update(entity);
+			if (result == 0)
+				return NotFound();
+
+			return Ok(_mapper.Map<SensitiveDatumDto>(entity));
 		}
 
 		[HttpDelete("{id}")]
-		public ActionResult<bool> Delete([FromRoute] int id)
+		public async Task<ActionResult<bool>> Delete([FromRoute] int id)
 		{
-			var result = _repository.DeleteAsync<SensitiveDatum>(sd => sd.Identifier == id);
-			if (result is null)
+			var result = await _repository.DeleteAsync<SensitiveDatum>(sd => sd.Identifier == id);
+			if (result == 0)
 				return NotFound();
 
-			return Ok(_mapper.Map<SensitiveDatumDto>(result));
+			return NoContent();
 		}
 	}
 }
