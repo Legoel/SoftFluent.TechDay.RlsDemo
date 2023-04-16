@@ -31,15 +31,15 @@ namespace RlsDemo.Web.Controllers
 			return Ok(_mapper.Map<IEnumerable<SensitiveDatum>, IEnumerable<SensitiveDatumDto>>(_repository.GetEnumerable(querySpecification)));
 		}
 
-		[HttpGet("type/{type}")]
-		public ActionResult<IEnumerable<SensitiveDatumDto>> GetbyType([FromRoute] SensitiveDatumTypeDto type)
-		{
-			var entityType = _mapper.Map<SensitiveDatumType>(type);
-			var querySpecification = new BaseQuerySpecification<SensitiveDatum>();
-			querySpecification.AddInclude(sd => sd.Tenant);
-			querySpecification.ApplyOrderBy(sd => sd.Name);
-			return Ok(_mapper.Map<IEnumerable<SensitiveDatum>, IEnumerable<SensitiveDatumDto>>(_repository.GetEnumerable(querySpecification, sd => sd.Type == entityType)));
-		}
+		//[HttpGet("type/{type}")]
+		//public ActionResult<IEnumerable<SensitiveDatumDto>> GetbyType([FromRoute] SensitiveDatumTypeDto type)
+		//{
+		//	var entityType = _mapper.Map<SensitiveDatumType>(type);
+		//	var querySpecification = new BaseQuerySpecification<SensitiveDatum>();
+		//	querySpecification.AddInclude(sd => sd.Tenant);
+		//	querySpecification.ApplyOrderBy(sd => sd.Name);
+		//	return Ok(_mapper.Map<IEnumerable<SensitiveDatum>, IEnumerable<SensitiveDatumDto>>(_repository.GetEnumerable(querySpecification, sd => sd.Type == entityType)));
+		//}
 
 		[HttpGet("{id}")]
 		public ActionResult<SensitiveDatumDto> Get([FromRoute] int id)
