@@ -9,6 +9,7 @@ namespace RlsDemo.Web.Controllers
 {
 	[ApiController]
 	[Route("[controller]")]
+	[AllowAnonymous]
 	public class SensitiveDataController : ControllerBase
 	{
 		private readonly IBaseRepository<RlsDemoContext> _repository;
@@ -23,12 +24,12 @@ namespace RlsDemo.Web.Controllers
 		}
 
 		[HttpGet]
-		public ActionResult<IEnumerable<SensitiveDatumDto>> GetAll()
+		public ActionResult<IEnumerable<SensitiveDatumDto>> GetAll([FromQuery] int tenantId)
 		{
 			var querySpecification = new BaseQuerySpecification<SensitiveDatum>();
 			querySpecification.AddInclude(sd => sd.Tenant);
 			querySpecification.ApplyOrderBy(sd => sd.Name);
-			return Ok(_mapper.Map<IEnumerable<SensitiveDatum>, IEnumerable<SensitiveDatumDto>>(_repository.GetEnumerable(querySpecification)));
+			return Ok(_mapper.Map<IEnumerable<SensitiveDatum>, IEnumerable<SensitiveDatumDto>>(_repository.GetEnumerable(querySpecification, sd => sd.TenantId == tenantId)));
 		}
 
 		//[HttpGet("type/{type}")]
@@ -42,9 +43,9 @@ namespace RlsDemo.Web.Controllers
 		//}
 
 		[HttpGet("{id}")]
-		public ActionResult<SensitiveDatumDto> Get([FromRoute] int id)
+		public ActionResult<SensitiveDatumDto> Get([FromRoute] int id, [FromQuery] int tenantId)
 		{
-			var result = _repository.Get<SensitiveDatum>(sd => sd.Identifier == id);
+			var result = _repository.Get<SensitiveDatum>(sd => sd.Identifier == id && sd.TenantId == tenantId);
 			if (result is null)
 				return NotFound();
 
@@ -62,11 +63,11 @@ namespace RlsDemo.Web.Controllers
 
 		[HttpPut("{id}")]
 		[Authorize(Roles = "Administrator")]
-		public ActionResult<SensitiveDatumDto> Put([FromRoute] int id, [FromBody] SensitiveDatumDto datum)
+		public ActionResult<SensitiveDatumDto> Put([FromRoute] int id, [FromQuery] int tenantId, [FromBody] SensitiveDatumDto datum)
 		{
 			var entity = _mapper.Map<SensitiveDatum>(datum);
 
-			var result = _repository.Update(entity);
+			var result = _repository.Update(entity, sd => sd.Identifier == id && sd.TenantId == tenantId);
 			if (result == 0)
 				return NotFound();
 
@@ -75,9 +76,9 @@ namespace RlsDemo.Web.Controllers
 
 		[HttpDelete("{id}")]
 		[Authorize(Roles = "Administrator")]
-		public async Task<ActionResult<bool>> Delete([FromRoute] int id)
+		public async Task<ActionResult<bool>> Delete([FromRoute] int id, [FromQuery] int tenantId)
 		{
-			var result = await _repository.DeleteAsync<SensitiveDatum>(sd => sd.Identifier == id);
+			var result = await _repository.DeleteAsync<SensitiveDatum>(sd => sd.Identifier == id && sd.TenantId == tenantId);
 			if (result == 0)
 				return NotFound();
 
