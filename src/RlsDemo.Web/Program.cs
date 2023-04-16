@@ -1,7 +1,8 @@
+using System.Text.Json.Serialization;
 using Microsoft.EntityFrameworkCore;
+using RlsDemo.Web;
 using RslDemo.Context;
 using Softfluent.Asapp.Core.Data;
-
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -15,10 +16,12 @@ builder.Services.AddDbContext<RlsDemoContext>((provider, options) =>
 
 builder.Services.AddBaseRepository();
 
-builder.Services.AddControllers();
+builder.Services.AddControllers()
+	.AddJsonOptions(configure => configure.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter()));
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+builder.Services.AddAutoMapper(typeof(AutoMapperConfiguration));
 
 var app = builder.Build();
 

@@ -1,21 +1,31 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using System.Text.Json.Serialization;
+using Microsoft.EntityFrameworkCore;
+using Softfluent.Asapp.Core.Data;
 
 namespace RslDemo.Context
 {
-	public class Tenant
+	public class Tenant : Entity<int>
 	{
-		public int Id { get; set; }
 		public string Name { get; set; } = null!;
 	}
 
-	public class SensitiveDatum
+	public class SensitiveDatum : Entity<int>
 	{
-		public int Id { get; set; }
+		public SensitiveDatumType Type { get; set; }
 		public string Name { get; set; } = null!;
 		public string? Content { get; set; }
 
 		public int TenantId { get; set; }
 		public Tenant Tenant { get; set; } = null!;
+	}
+
+	public enum SensitiveDatumType
+	{
+		Undefined,
+		Name,
+		Email,
+		SocialSecurityNumber,
+		IsinAccountNumber
 	}
 
 	public partial class RlsDemoContext : DbContext
@@ -33,15 +43,15 @@ namespace RslDemo.Context
 		{
 			modelBuilder.Entity<Tenant>(entity =>
 			{
-				entity.HasKey(e => e.Id);
-				entity.Property(e => e.Id).ValueGeneratedOnAdd();
+				entity.HasKey(e => e.Identifier);
+				entity.Property(e => e.Identifier).ValueGeneratedOnAdd();
 				entity.HasIndex(e => e.Name).IsUnique();
 			});
 
 			modelBuilder.Entity<SensitiveDatum>(entity =>
 			{
-				entity.HasKey(e => e.Id);
-				entity.Property(e => e.Id).ValueGeneratedOnAdd();
+				entity.HasKey(e => e.Identifier);
+				entity.Property(e => e.Identifier).ValueGeneratedOnAdd();
 				entity.HasIndex(e => new { e.Name, e.TenantId }).IsUnique();
 
 				entity.HasOne(e => e.Tenant)
@@ -56,22 +66,70 @@ namespace RslDemo.Context
 		private void EnsureData(ModelBuilder modelBuilder)
 		{
 			var tenants = new Tenant[] {
-				new Tenant{ Name = "Locataire 1", Id = 1},
-				new Tenant{ Name = "Locataire 2", Id = 2},
-				new Tenant{ Name = "Locataire 3", Id = 3},
+				new Tenant{ Name = "Locataire 1", Identifier = 1, TrackCreationTime = DateTime.Now, TrackCreationUser = "System", TrackLastWriteTime = DateTime.Now, TrackLastWriteUser = "System"},
+				new Tenant{ Name = "Locataire 2", Identifier = 2, TrackCreationTime = DateTime.Now, TrackCreationUser = "System", TrackLastWriteTime = DateTime.Now, TrackLastWriteUser = "System"},
+				new Tenant{ Name = "Locataire 3", Identifier = 3, TrackCreationTime = DateTime.Now, TrackCreationUser = "System", TrackLastWriteTime = DateTime.Now, TrackLastWriteUser = "System"},
 			};
 
-			int id = 1;
-			var sensitiveData = tenants.SelectMany(tenant => new SensitiveDatum[]
-			{
-				new SensitiveDatum {Id = id++, Name = "Nom du locataire " + tenant.Id, Content = Faker.Name.FullName(), TenantId = tenant.Id},
-				new SensitiveDatum {Id = id++, Name = "Email du locataire " + tenant.Id, Content = Faker.Internet.Email(), TenantId = tenant.Id},
-				new SensitiveDatum {Id = id++, Name = "Numéro de sécu du locataire " + tenant.Id, Content = Faker.Identification.SocialSecurityNumber(), TenantId = tenant.Id},
-				new SensitiveDatum {Id = id++, Name = "Compte bancaire du locataire " + tenant.Id, Content = Faker.Finance.Isin(), TenantId = tenant.Id},
-			});
+			int datumId = 1;
+			var sensitiveData = tenants.SelectMany(tenant => EnsureSensitiveDataForTenant(ref datumId, tenant));
 
 			modelBuilder.Entity<Tenant>(entity => entity.HasData(tenants));
 			modelBuilder.Entity<SensitiveDatum>(entity => entity.HasData(sensitiveData));
+		}
+
+		private IEnumerable<SensitiveDatum> EnsureSensitiveDataForTenant(ref int datumId, Tenant tenant)
+		{
+			return new List<SensitiveDatum> {
+				new SensitiveDatum
+				{
+					Identifier = datumId++,
+					TenantId = tenant.Identifier,
+					Type = SensitiveDatumType.Name,
+					Name = "Nom du locataire " + tenant.Identifier,
+					Content = Faker.Name.FullName(),
+					TrackCreationTime = DateTime.Now,
+					TrackCreationUser = "System",
+					TrackLastWriteTime = DateTime.Now,
+					TrackLastWriteUser = "System",
+				},
+				new SensitiveDatum
+				{
+					Identifier = datumId++,
+					TenantId = tenant.Identifier,
+					Type = SensitiveDatumType.Email,
+					Name = "Email du locataire " + tenant.Identifier,
+					Content = Faker.Internet.Email(),
+					TrackCreationTime = DateTime.Now,
+					TrackCreationUser = "System",
+					TrackLastWriteTime = DateTime.Now,
+					TrackLastWriteUser = "System",
+				},
+				new SensitiveDatum
+				{
+					Identifier = datumId++,
+					TenantId = tenant.Identifier,
+					Type = SensitiveDatumType.SocialSecurityNumber,
+					Name = "Numéro de sécu du locataire " + tenant.Identifier,
+					Content = Faker.Identification.SocialSecurityNumber(),
+					TrackCreationTime = DateTime.Now,
+					TrackCreationUser = "System",
+					TrackLastWriteTime = DateTime.Now,
+					TrackLastWriteUser = "System",
+				},
+				new SensitiveDatum
+				{
+					Identifier = datumId++,
+					TenantId = tenant.Identifier,
+					Type = SensitiveDatumType.IsinAccountNumber,
+					Name = "Identifiant bancaire du locataire " + tenant.Identifier,
+					Content = Faker.Finance.Isin(),
+					TrackCreationTime = DateTime.Now,
+					TrackCreationUser = "System",
+					TrackLastWriteTime = DateTime.Now,
+					TrackLastWriteUser = "System",
+				}
+			};
 		}
 	}
 }

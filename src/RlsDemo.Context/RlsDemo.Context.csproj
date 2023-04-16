@@ -9,6 +9,7 @@
   <ItemGroup>
 		<PackageReference Include="Faker.Net" Version="2.0.154" />
 		<PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="7.0.5" />
-	</ItemGroup>
+    <ProjectReference Include="..\..\..\OptiqFluent\src\common\asapp.core\asapp.core.csproj" />
+  </ItemGroup>
 
 </Project>
