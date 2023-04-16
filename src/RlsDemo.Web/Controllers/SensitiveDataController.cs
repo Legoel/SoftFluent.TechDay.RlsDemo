@@ -1,4 +1,5 @@
 using AutoMapper;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using RlsDemo.Context.Model;
 using RslDemo.Context;
@@ -30,6 +31,16 @@ namespace RlsDemo.Web.Controllers
 			return Ok(_mapper.Map<IEnumerable<SensitiveDatum>, IEnumerable<SensitiveDatumDto>>(_repository.GetEnumerable(querySpecification)));
 		}
 
+		[HttpGet("type/{type}")]
+		public ActionResult<IEnumerable<SensitiveDatumDto>> GetbyType([FromRoute] SensitiveDatumTypeDto type)
+		{
+			var entityType = _mapper.Map<SensitiveDatumType>(type);
+			var querySpecification = new BaseQuerySpecification<SensitiveDatum>();
+			querySpecification.AddInclude(sd => sd.Tenant);
+			querySpecification.ApplyOrderBy(sd => sd.Name);
+			return Ok(_mapper.Map<IEnumerable<SensitiveDatum>, IEnumerable<SensitiveDatumDto>>(_repository.GetEnumerable(querySpecification, sd => sd.Type == entityType)));
+		}
+
 		[HttpGet("{id}")]
 		public ActionResult<SensitiveDatumDto> Get([FromRoute] int id)
 		{
@@ -41,6 +52,7 @@ namespace RlsDemo.Web.Controllers
 		}
 
 		[HttpPost]
+		[Authorize(Roles = "Administrator")]
 		public ActionResult<SensitiveDatumDto> Post([FromBody] SensitiveDatumDto datum)
 		{
 			var entity = _mapper.Map<SensitiveDatum>(datum);
@@ -49,6 +61,7 @@ namespace RlsDemo.Web.Controllers
 		}
 
 		[HttpPut("{id}")]
+		[Authorize(Roles = "Administrator")]
 		public ActionResult<SensitiveDatumDto> Put([FromRoute] int id, [FromBody] SensitiveDatumDto datum)
 		{
 			var entity = _mapper.Map<SensitiveDatum>(datum);
@@ -61,6 +74,7 @@ namespace RlsDemo.Web.Controllers
 		}
 
 		[HttpDelete("{id}")]
+		[Authorize(Roles = "Administrator")]
 		public async Task<ActionResult<bool>> Delete([FromRoute] int id)
 		{
 			var result = await _repository.DeleteAsync<SensitiveDatum>(sd => sd.Identifier == id);

@@ -7,6 +7,7 @@ namespace RlsDemo.Web
 	{
 		public AutoMapperConfiguration()
 		{
+			CreateMap<SensitiveDatumType, SensitiveDatumTypeDto>().ReverseMap();
 			CreateMap<SensitiveDatum, SensitiveDatumDto>().ReverseMap();
 		}
 	}
