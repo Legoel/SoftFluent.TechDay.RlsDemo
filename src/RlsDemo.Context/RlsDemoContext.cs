@@ -1,34 +1,9 @@
-﻿using System.Text.Json.Serialization;
-using Microsoft.EntityFrameworkCore;
-using Softfluent.Asapp.Core.Data;
+﻿using Microsoft.EntityFrameworkCore;
+using RlsDemo.Context.Model;
 
 namespace RslDemo.Context
 {
-	public class Tenant : Entity<int>
-	{
-		public string Name { get; set; } = null!;
-	}
-
-	public class SensitiveDatum : Entity<int>
-	{
-		public SensitiveDatumType Type { get; set; }
-		public string Name { get; set; } = null!;
-		public string? Content { get; set; }
-
-		public int TenantId { get; set; }
-		public Tenant Tenant { get; set; } = null!;
-	}
-
-	public enum SensitiveDatumType
-	{
-		Undefined,
-		Name,
-		Email,
-		SocialSecurityNumber,
-		IsinAccountNumber
-	}
-
-	public partial class RlsDemoContext : DbContext
+    public partial class RlsDemoContext : DbContext
 	{
 		public RlsDemoContext(DbContextOptions<RlsDemoContext> options)
 			: base(options)

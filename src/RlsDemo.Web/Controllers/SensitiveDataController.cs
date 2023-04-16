@@ -6,7 +6,7 @@ using Softfluent.Asapp.Core.Data;
 
 namespace RlsDemo.Web.Controllers
 {
-	[ApiController]
+    [ApiController]
 	[Route("[controller]")]
 	public class SensitiveDataController : ControllerBase
 	{
@@ -40,11 +40,22 @@ namespace RlsDemo.Web.Controllers
 			return Ok(_mapper.Map<SensitiveDatumDto>(result));
 		}
 
-		[HttpPost("")]
-		public ActionResult<SensitiveDatumDto> Get([FromBody] SensitiveDatumDto datum)
+		[HttpPost]
+		public ActionResult<SensitiveDatumDto> Post([FromBody] SensitiveDatumDto datum)
 		{
 			var model = _mapper.Map<SensitiveDatum>(datum);
-			return Ok(_repository.Create(model));
+			_repository.Create(model);
+			return Ok(_mapper.Map<SensitiveDatumDto>(model));
+		}
+
+		[HttpDelete("{id}")]
+		public ActionResult<SensitiveDatumDto> Delete([FromRoute] int id)
+		{
+			var result = _repository.Get<SensitiveDatum>(sd => sd.Identifier == id);
+			if (result is null)
+				return NotFound();
+
+			return Ok(_mapper.Map<SensitiveDatumDto>(result));
 		}
 	}
 }
