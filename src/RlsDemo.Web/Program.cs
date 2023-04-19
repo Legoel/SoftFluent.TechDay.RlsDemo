@@ -87,6 +87,10 @@ if (app.Environment.IsDevelopment())
 	var context = scope.ServiceProvider.GetRequiredService<RlsDemoContext>();
 	context.Database.EnsureDeleted();
 	context.Database.EnsureCreated();
+	foreach (string batch in RlsDemoContext.GetSecurityScript())
+	{
+		context.Database.ExecuteSqlRaw(batch);
+	}
 	app.UseSwagger();
 	app.UseSwaggerUI(configure => configure.EnableTryItOutByDefault());
 }
