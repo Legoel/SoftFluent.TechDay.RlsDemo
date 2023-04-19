@@ -1,11 +1,13 @@
 using System.Text;
 using System.Text.Json.Serialization;
+using Afdec.OptiqFluent.Context;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using RlsDemo.Web;
 using RslDemo.Context;
+using Softfluent.Asapp.Core.Context;
 using Softfluent.Asapp.Core.Data;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -13,13 +15,17 @@ var builder = WebApplication.CreateBuilder(args);
 var configuration = builder.Configuration;
 
 // Add services to the container.
+builder.Services.AddScoped<TenantFilterDbInterceptor>();
+builder.Services.AddScoped<SetTenantInterceptor>();
 builder.Services.AddDbContext<RlsDemoContext>((provider, options) =>
 {
 	options.UseSqlServer(configuration.GetConnectionString(Environment.MachineName));
 	options.EnableSensitiveDataLogging();
+	options.AddInterceptors(provider.GetRequiredService<TenantFilterDbInterceptor>());
+	options.AddInterceptors(provider.GetRequiredService<SetTenantInterceptor>());
 });
 // Add Asapp repository
-builder.Services.AddBaseRepository();
+builder.Services.AddBaseRepository().AddExecutionContext();
 
 // Add Controllers and OpenApi
 builder.Services.AddControllers()

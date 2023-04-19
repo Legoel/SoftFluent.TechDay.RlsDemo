@@ -30,7 +30,6 @@ namespace RslDemo.Context
 				entity.HasKey(e => e.Identifier);
 				entity.Property(e => e.Identifier).ValueGeneratedOnAdd();
 				entity.HasIndex(e => new { e.Name, e.TenantId }).IsUnique();
-				entity.HasQueryFilter(e => e.TenantId == CurrentTenantId);
 
 				entity.HasOne(e => e.Tenant)
 					.WithMany()

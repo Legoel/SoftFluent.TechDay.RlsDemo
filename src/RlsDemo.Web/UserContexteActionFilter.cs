@@ -1,15 +1,15 @@
 ﻿using Microsoft.AspNetCore.Mvc.Filters;
-using RslDemo.Context;
+using Softfluent.Asapp.Core.Context;
 
 namespace RlsDemo.Web
 {
 	public class UserContexteActionFilter : IAsyncActionFilter
 	{
-		private readonly RlsDemoContext _context;
+		private readonly CallContext _callContext;
 
-		public UserContexteActionFilter(RlsDemoContext context)
+		public UserContexteActionFilter(CallContext callContext)
 		{
-			_context = context;
+			_callContext = callContext;
 		}
 
 		public Task OnActionExecutionAsync(ActionExecutingContext context, ActionExecutionDelegate next)
@@ -18,7 +18,8 @@ namespace RlsDemo.Web
 			if (string.IsNullOrEmpty(tenant) || !int.TryParse(tenant, out int tenantId))
 				throw new UnauthorizedAccessException("KO");
 
-			_context.CurrentTenantId = tenantId;
+			_callContext.TenantId = tenantId;
+			_callContext.ExecutionIdentity = context.HttpContext.User.Identity?.Name ?? "Unknown";
 
 			return next();
 		}
