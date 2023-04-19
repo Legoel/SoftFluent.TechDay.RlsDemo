@@ -9,6 +9,7 @@ namespace RlsDemo.Web.Controllers
 {
 	[ApiController]
 	[Route("[controller]")]
+	[TypeFilter(typeof(UserContexteActionFilter))]
 	public class SensitiveDataController : ControllerBase
 	{
 		private readonly IBaseRepository<RlsDemoContext> _repository;
@@ -25,13 +26,10 @@ namespace RlsDemo.Web.Controllers
 		[HttpGet]
 		public ActionResult<IEnumerable<SensitiveDatumDto>> GetAll()
 		{
-			if (!TryGetTenant(out int tenantId))
-				return Unauthorized();
-
 			var querySpecification = new BaseQuerySpecification<SensitiveDatum>();
 			querySpecification.AddInclude(sd => sd.Tenant);
 			querySpecification.ApplyOrderBy(sd => sd.Name);
-			return Ok(_mapper.Map<IEnumerable<SensitiveDatum>, IEnumerable<SensitiveDatumDto>>(_repository.GetEnumerable(querySpecification, sd => sd.TenantId == tenantId)));
+			return Ok(_mapper.Map<IEnumerable<SensitiveDatum>, IEnumerable<SensitiveDatumDto>>(_repository.GetEnumerable(querySpecification)));
 		}
 
 		[HttpGet("type/{type}")]
@@ -47,10 +45,7 @@ namespace RlsDemo.Web.Controllers
 		[HttpGet("{id}")]
 		public ActionResult<SensitiveDatumDto> Get([FromRoute] int id)
 		{
-			if (!TryGetTenant(out int tenantId))
-				return Unauthorized();
-
-			var result = _repository.Get<SensitiveDatum>(sd => sd.Identifier == id && sd.TenantId == tenantId);
+			var result = _repository.Get<SensitiveDatum>(sd => sd.Identifier == id);
 			if (result is null)
 				return NotFound();
 
@@ -70,12 +65,9 @@ namespace RlsDemo.Web.Controllers
 		[Authorize(Roles = "Administrator")]
 		public ActionResult<SensitiveDatumDto> Put([FromRoute] int id, [FromBody] SensitiveDatumDto datum)
 		{
-			if (!TryGetTenant(out int tenantId))
-				return Unauthorized();
-
 			var entity = _mapper.Map<SensitiveDatum>(datum);
 
-			var result = _repository.Update(entity, sd => sd.Identifier == id && sd.TenantId == tenantId);
+			var result = _repository.Update(entity, sd => sd.Identifier == id);
 			if (result == 0)
 				return NotFound();
 
@@ -86,24 +78,11 @@ namespace RlsDemo.Web.Controllers
 		[Authorize(Roles = "Administrator")]
 		public async Task<ActionResult<bool>> Delete([FromRoute] int id)
 		{
-			if (!TryGetTenant(out int tenantId))
-				return Unauthorized();
-
-			var result = await _repository.DeleteAsync<SensitiveDatum>(sd => sd.Identifier == id && sd.TenantId == tenantId);
+			var result = await _repository.DeleteAsync<SensitiveDatum>(sd => sd.Identifier == id);
 			if (result == 0)
 				return NotFound();
 
 			return NoContent();
-		}
-
-		private bool TryGetTenant(out int tenantId)
-		{
-			tenantId = 0;
-			string? tenant = User.FindFirst("TenantId")?.Value;
-			if (string.IsNullOrEmpty(tenant))
-				return false;
-
-			return int.TryParse(tenant, out tenantId);
 		}
 	}
 }
