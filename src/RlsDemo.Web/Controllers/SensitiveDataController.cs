@@ -8,38 +8,47 @@ using Softfluent.Asapp.Core.Data;
 
 namespace RlsDemo.Web.Controllers
 {
+	public class ContextTenantActionFilter : IAsyncActionFilter
+	{
+		private readonly RlsDemoContext _context;
+
+		public ContextTenantActionFilter(RlsDemoContext context)
+		{
+			_context = context;
+		}
+
+		public Task OnActionExecutionAsync(ActionExecutingContext context, ActionExecutionDelegate next)
+		{
+			var tenant = context.HttpContext.User.FindAll("Tenant").FirstOrDefault()?.Value;
+			if (string.IsNullOrEmpty(tenant) || !int.TryParse(tenant, out int tenantId))
+				throw new UnauthorizedAccessException();
+
+			context.HttpContext.Items.Add("TenantId", tenantId);
+			_context.ContextTenantId = tenantId;
+
+			return next();
+		}
+	}
+
+	[TypeFilter(typeof(ContextTenantActionFilter))]
 	[ApiController]
 	[Route("[controller]")]
 	public class SensitiveDataController : ControllerBase
 	{
-		private readonly RlsDemoContext _context;
 		private readonly IBaseRepository<RlsDemoContext> _repository;
 		private readonly IMapper _mapper;
 		private readonly ILogger<SensitiveDataController> _logger;
 
-		public SensitiveDataController(RlsDemoContext context, IBaseRepository<RlsDemoContext> repository, IMapper mapper, ILogger<SensitiveDataController> logger)
+		public SensitiveDataController(IBaseRepository<RlsDemoContext> repository, IMapper mapper, ILogger<SensitiveDataController> logger)
 		{
-			_context = context;
 			_repository = repository;
 			_mapper = mapper;
 			_logger = logger;
 		}
 
-		private void EnsureContextTenant(out int tenantId)
-		{
-			tenantId = 0;
-			var tenant = User.FindAll("Tenant").FirstOrDefault()?.Value;
-			if (string.IsNullOrEmpty(tenant) || !int.TryParse(tenant, out tenantId))
-				throw new UnauthorizedAccessException();
-
-			_context.ContextTenantId = tenantId;
-		}
-
 		[HttpGet]
 		public ActionResult<IEnumerable<SensitiveDatumDto>> GetAll()
 		{
-			EnsureContextTenant(out _);
-
 			var querySpecification = new BaseQuerySpecification<SensitiveDatum>();
 			querySpecification.AddInclude(sd => sd.Tenant);
 			querySpecification.ApplyOrderBy(sd => sd.Name);
@@ -49,8 +58,6 @@ namespace RlsDemo.Web.Controllers
 		[HttpGet("type/{type}")]
 		public ActionResult<IEnumerable<SensitiveDatumDto>> GetbyType([FromRoute] SensitiveDatumTypeDto type)
 		{
-			EnsureContextTenant(out _);
-
 			var entityType = _mapper.Map<SensitiveDatumType>(type);
 			var querySpecification = new BaseQuerySpecification<SensitiveDatum>();
 			querySpecification.AddInclude(sd => sd.Tenant);
@@ -61,8 +68,6 @@ namespace RlsDemo.Web.Controllers
 		[HttpGet("{id}")]
 		public ActionResult<SensitiveDatumDto> Get([FromRoute] int id)
 		{
-			EnsureContextTenant(out _);
-
 			var result = _repository.Get<SensitiveDatum>(sd => sd.Identifier == id);
 			if (result is null)
 				return NotFound();
@@ -74,7 +79,8 @@ namespace RlsDemo.Web.Controllers
 		[Authorize(Roles = "Administrator")]
 		public ActionResult<SensitiveDatumDto> Post([FromBody] SensitiveDatumDto datum)
 		{
-			EnsureContextTenant(out int tenantId);
+			if (!HttpContext.Items.TryGetValue("TenantId", out object? tenant) || tenant is not int tenantId)
+				return Unauthorized();
 
 			var entity = _mapper.Map<SensitiveDatum>(datum);
 			if (entity.TenantId != tenantId)
@@ -88,9 +94,10 @@ namespace RlsDemo.Web.Controllers
 		[Authorize(Roles = "Administrator")]
 		public ActionResult<SensitiveDatumDto> Put([FromRoute] int id, [FromBody] SensitiveDatumDto datum)
 		{
-			EnsureContextTenant(out int tenantId);
-
 			var entity = _mapper.Map<SensitiveDatum>(datum);
+
+			if (!HttpContext.Items.TryGetValue("TenantId", out object? tenant) || tenant is not int tenantId)
+				return Unauthorized();
 
 			if (entity.TenantId != tenantId)
 				return Unauthorized();
@@ -109,8 +116,6 @@ namespace RlsDemo.Web.Controllers
 		[Authorize(Roles = "Administrator")]
 		public async Task<ActionResult<bool>> Delete([FromRoute] int id)
 		{
-			EnsureContextTenant(out int tenantId);
-
 			var result = await _repository.DeleteAsync<SensitiveDatum>(sd => sd.Identifier == id);
 			if (result == 0)
 				return NotFound();
