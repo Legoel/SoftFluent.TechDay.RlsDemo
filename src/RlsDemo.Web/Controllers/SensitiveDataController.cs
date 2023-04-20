@@ -11,56 +11,58 @@ namespace RlsDemo.Web.Controllers
 	[Route("[controller]")]
 	public class SensitiveDataController : ControllerBase
 	{
+		private readonly RlsDemoContext _context;
 		private readonly IBaseRepository<RlsDemoContext> _repository;
 		private readonly IMapper _mapper;
 		private readonly ILogger<SensitiveDataController> _logger;
 
-		public SensitiveDataController(IBaseRepository<RlsDemoContext> repository, IMapper mapper, ILogger<SensitiveDataController> logger)
+		public SensitiveDataController(RlsDemoContext context, IBaseRepository<RlsDemoContext> repository, IMapper mapper, ILogger<SensitiveDataController> logger)
 		{
+			_context = context;
 			_repository = repository;
 			_mapper = mapper;
 			_logger = logger;
 		}
 
-		private bool TryGetTenant(out int tenantId)
+		private void EnsureContextTenant(out int tenantId)
 		{
 			tenantId = 0;
 			var tenant = User.FindAll("Tenant").FirstOrDefault()?.Value;
-			return !string.IsNullOrEmpty(tenant) && int.TryParse(tenant, out tenantId);
+			if (string.IsNullOrEmpty(tenant) || !int.TryParse(tenant, out tenantId))
+				throw new UnauthorizedAccessException();
+
+			_context.ContextTenantId = tenantId;
 		}
 
 		[HttpGet]
 		public ActionResult<IEnumerable<SensitiveDatumDto>> GetAll()
 		{
-			if (!TryGetTenant(out int tenantId))
-				return Unauthorized();
+			EnsureContextTenant(out _);
 
 			var querySpecification = new BaseQuerySpecification<SensitiveDatum>();
 			querySpecification.AddInclude(sd => sd.Tenant);
 			querySpecification.ApplyOrderBy(sd => sd.Name);
-			return Ok(_mapper.Map<IEnumerable<SensitiveDatum>, IEnumerable<SensitiveDatumDto>>(_repository.GetEnumerable(querySpecification, sd => sd.TenantId == tenantId)));
+			return Ok(_mapper.Map<IEnumerable<SensitiveDatum>, IEnumerable<SensitiveDatumDto>>(_repository.GetEnumerable(querySpecification)));
 		}
 
 		[HttpGet("type/{type}")]
 		public ActionResult<IEnumerable<SensitiveDatumDto>> GetbyType([FromRoute] SensitiveDatumTypeDto type)
 		{
-			if (!TryGetTenant(out int tenantId))
-				return Unauthorized();
+			EnsureContextTenant(out _);
 
 			var entityType = _mapper.Map<SensitiveDatumType>(type);
 			var querySpecification = new BaseQuerySpecification<SensitiveDatum>();
 			querySpecification.AddInclude(sd => sd.Tenant);
 			querySpecification.ApplyOrderBy(sd => sd.Name);
-			return Ok(_mapper.Map<IEnumerable<SensitiveDatum>, IEnumerable<SensitiveDatumDto>>(_repository.GetEnumerable(querySpecification, sd => sd.Type == entityType && sd.TenantId == tenantId)));
+			return Ok(_mapper.Map<IEnumerable<SensitiveDatum>, IEnumerable<SensitiveDatumDto>>(_repository.GetEnumerable(querySpecification, sd => sd.Type == entityType)));
 		}
 
 		[HttpGet("{id}")]
 		public ActionResult<SensitiveDatumDto> Get([FromRoute] int id)
 		{
-			if (!TryGetTenant(out int tenantId))
-				return Unauthorized();
+			EnsureContextTenant(out _);
 
-			var result = _repository.Get<SensitiveDatum>(sd => sd.Identifier == id && sd.TenantId == tenantId);
+			var result = _repository.Get<SensitiveDatum>(sd => sd.Identifier == id);
 			if (result is null)
 				return NotFound();
 
@@ -71,8 +73,7 @@ namespace RlsDemo.Web.Controllers
 		[Authorize(Roles = "Administrator")]
 		public ActionResult<SensitiveDatumDto> Post([FromBody] SensitiveDatumDto datum)
 		{
-			if (!TryGetTenant(out int tenantId))
-				return Unauthorized();
+			EnsureContextTenant(out int tenantId);
 
 			var entity = _mapper.Map<SensitiveDatum>(datum);
 			if (entity.TenantId != tenantId)
@@ -86,8 +87,7 @@ namespace RlsDemo.Web.Controllers
 		[Authorize(Roles = "Administrator")]
 		public ActionResult<SensitiveDatumDto> Put([FromRoute] int id, [FromBody] SensitiveDatumDto datum)
 		{
-			if (!TryGetTenant(out int tenantId))
-				return Unauthorized();
+			EnsureContextTenant(out int tenantId);
 
 			var entity = _mapper.Map<SensitiveDatum>(datum);
 
@@ -108,10 +108,9 @@ namespace RlsDemo.Web.Controllers
 		[Authorize(Roles = "Administrator")]
 		public async Task<ActionResult<bool>> Delete([FromRoute] int id)
 		{
-			if (!TryGetTenant(out int tenantId))
-				return Unauthorized();
+			EnsureContextTenant(out int tenantId);
 
-			var result = await _repository.DeleteAsync<SensitiveDatum>(sd => sd.Identifier == id && sd.TenantId == tenantId);
+			var result = await _repository.DeleteAsync<SensitiveDatum>(sd => sd.Identifier == id);
 			if (result == 0)
 				return NotFound();
 

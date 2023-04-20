@@ -16,6 +16,7 @@ var configuration = builder.Configuration;
 builder.Services.AddDbContext<RlsDemoContext>((provider, options) =>
 {
 	options.UseSqlServer(configuration.GetConnectionString(Environment.MachineName));
+	options.EnableDetailedErrors();
 });
 // Add Asapp repository
 builder.Services.AddBaseRepository();
