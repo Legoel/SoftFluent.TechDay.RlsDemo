@@ -30,7 +30,6 @@ namespace RslDemo.Context
 				entity.HasKey(e => e.Identifier);
 				entity.Property(e => e.Identifier).ValueGeneratedOnAdd();
 				entity.HasIndex(e => new { e.Name, e.TenantId }).IsUnique();
-				entity.HasQueryFilter(e => e.TenantId == ContextTenantId);
 
 				entity.HasOne(e => e.Tenant)
 					.WithMany()
@@ -39,6 +38,27 @@ namespace RslDemo.Context
 			});
 
 			EnsureData(modelBuilder);
+		}
+
+		public static IEnumerable<string> GetSecurityScript()
+		{
+			yield return "DROP SECURITY POLICY IF EXISTS [Security].[SensitiveDataFilter]";
+			yield return "DROP FUNCTION IF EXISTS [Security].[fn_tenantfilterpredicate]";
+			yield return "DROP SCHEMA IF EXISTS [Security]";
+			yield return "CREATE SCHEMA [Security]";
+			yield return "CREATE FUNCTION [Security].[fn_tenantfilterpredicate](@TenantId int) " +
+				"    RETURNS TABLE " +
+				"    WITH SCHEMABINDING " +
+				"AS " +
+				"    RETURN SELECT 1 AS granted " +
+				"    WHERE " +
+				"        @TenantId = SESSION_CONTEXT(N'TenantId')";
+			yield return "CREATE SECURITY POLICY [Security].[SensitiveDataFilter] " +
+				"    ADD FILTER PREDICATE [Security].[fn_tenantfilterpredicate](TenantId) " +
+				"        ON [dbo].[SensitiveData], " +
+				"    ADD BLOCK PREDICATE [Security].[fn_tenantfilterpredicate](TenantId) " +
+				"        ON [dbo].[SensitiveData] " +
+				"    WITH (STATE = ON)";
 		}
 
 		private void EnsureData(ModelBuilder modelBuilder)

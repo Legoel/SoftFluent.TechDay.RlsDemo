@@ -22,7 +22,7 @@ namespace RlsDemo.Web.Controllers
 		[HttpGet]
 		public ActionResult<UserTokenDto> GetToken(string name)
 		{
-			var expiresOn = DateTime.UtcNow.AddMinutes(_configuration.GetValue("Authentication:JwtToken:Expiration", 60));
+			var expiresOn = DateTime.UtcNow.AddDays(_configuration.GetValue("Authentication:JwtToken:Expiration", 1));
 			var role = GetRole(name);
 			var login = $"{name} {role.ToUpper()}";
 			var tenant = GetTenant(name);
