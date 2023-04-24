@@ -23,15 +23,17 @@ namespace RlsDemo.Web.Controllers
 		[HttpGet]
 		public ActionResult<UserTokenDto> GetToken(string name)
 		{
-			var expiresOn = DateTime.UtcNow.AddMinutes(_configuration.GetValue("Authentication:JwtToken:Expiration", 60));
+			var expiresOn = DateTime.UtcNow.AddDays(_configuration.GetValue("Authentication:JwtToken:Expiration", 10));
 			var role = GetRole(name);
 			var login = $"{name} {role.ToUpper()}";
+			var tenant = GetTenant(name);
 
 			var userToken = new UserTokenDto
 			{
 				Login = login,
 				ExpiresOn = expiresOn,
 				Roles = new[] { role },
+				TenantId = tenant,
 			};
 
 			var tokenHandler = new JwtSecurityTokenHandler();
@@ -39,7 +41,7 @@ namespace RlsDemo.Web.Controllers
 			var secret = Encoding.ASCII.GetBytes(_configuration.GetValue<string>("Authentication:JwtToken:Secret", "TheB€stKept_secretIn-the*World")!);
 			var descriptor = new SecurityTokenDescriptor
 			{
-				Subject = new ClaimsIdentity(GetClaims(login, role)),
+				Subject = new ClaimsIdentity(GetClaims(login, role, tenant)),
 				Expires = expiresOn,
 				SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(secret), SecurityAlgorithms.HmacSha256Signature)
 			};
@@ -58,13 +60,24 @@ namespace RlsDemo.Web.Controllers
 			};
 		}
 
-		private static IEnumerable<Claim> GetClaims(string login, string role)
+		private static int GetTenant(string name)
+		{
+			return name switch
+			{
+				"Thomas" => 1,
+				"Pierre" => 2,
+				_ => 3,
+			};
+		}
+
+		private static IEnumerable<Claim> GetClaims(string login, string role, int tenant)
 		{
 			var claims = new List<Claim>
 			{
 				new Claim(ClaimTypes.NameIdentifier, login),
 				new Claim(ClaimTypes.Name, login),
 				new Claim(ClaimTypes.Role, role),
+				new Claim("TenantId", tenant.ToString())
 			};
 
 			return claims;

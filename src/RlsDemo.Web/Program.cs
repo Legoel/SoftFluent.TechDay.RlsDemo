@@ -6,6 +6,7 @@ using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using RlsDemo.Web;
 using RslDemo.Context;
+using Softfluent.Asapp.Core.Context;
 using Softfluent.Asapp.Core.Data;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -13,12 +14,15 @@ var builder = WebApplication.CreateBuilder(args);
 var configuration = builder.Configuration;
 
 // Add services to the container.
+builder.Services.AddScoped<TenantFilterDbInterceptor>();
 builder.Services.AddDbContext<RlsDemoContext>((provider, options) =>
 {
 	options.UseSqlServer(configuration.GetConnectionString(Environment.MachineName));
+	options.EnableSensitiveDataLogging();
+	options.AddInterceptors(provider.GetRequiredService<TenantFilterDbInterceptor>());
 });
 // Add Asapp repository
-builder.Services.AddBaseRepository();
+builder.Services.AddBaseRepository().AddExecutionContext();
 
 // Add Controllers and OpenApi
 builder.Services.AddControllers()
@@ -86,6 +90,10 @@ if (app.Environment.IsDevelopment())
 	var context = scope.ServiceProvider.GetRequiredService<RlsDemoContext>();
 	context.Database.EnsureDeleted();
 	context.Database.EnsureCreated();
+	foreach(string batch in RlsDemoContext.GetSecurityScript())
+	{
+		context.Database.ExecuteSqlRaw(batch);
+	}
 	app.UseSwagger();
 	app.UseSwaggerUI(configure => configure.EnableTryItOutByDefault());
 }
