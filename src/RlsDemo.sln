@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.5.33424.131
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "asapp.core", "..\..\OptiqFluent\src\common\asapp.core\asapp.core.csproj", "{E8D2D97C-1E45-472E-8190-BB6D798EC558}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "asapp.core", "asapp.core\asapp.core.csproj", "{E8D2D97C-1E45-472E-8190-BB6D798EC558}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "RlsDemo.Context", "RlsDemo.Context\RlsDemo.Context.csproj", "{FE6CFDB4-27C9-4484-983A-F3AFB875D042}"
 EndProject

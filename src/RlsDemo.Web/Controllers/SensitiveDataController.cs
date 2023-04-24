@@ -1,37 +1,12 @@
 using AutoMapper;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Filters;
-using Microsoft.EntityFrameworkCore;
 using RlsDemo.Context.Model;
 using RslDemo.Context;
-using Softfluent.Asapp.Core.Context;
 using Softfluent.Asapp.Core.Data;
 
 namespace RlsDemo.Web.Controllers
 {
-	public class ContextTenantActionFilter : IAsyncActionFilter
-	{
-		private readonly CallContext _context;
-
-		public ContextTenantActionFilter(CallContext context)
-        {
-			_context = context;
-		}
-
-        public Task OnActionExecutionAsync(ActionExecutingContext context, ActionExecutionDelegate next)
-		{
-			var tenant = context.HttpContext.User.FindAll("TenantId").FirstOrDefault()?.Value;
-			if (tenant is null || !int.TryParse(tenant, out int tenantId))
-				throw new UnauthorizedAccessException();
-
-			_context.TenantId = tenantId;
-			_context.ExecutionIdentity = context.HttpContext.User.Identity?.Name ?? "Anonymous";
-
-			return next();
-		}
-	}
-
 	[TypeFilter(typeof(ContextTenantActionFilter))]
 	[ApiController]
 	[Route("[controller]")]
@@ -52,7 +27,6 @@ namespace RlsDemo.Web.Controllers
 		public ActionResult<IEnumerable<SensitiveDatumDto>> GetAll()
 		{
 			var querySpecification = new BaseQuerySpecification<SensitiveDatum>();
-			querySpecification.AddInclude(sd => sd.Tenant);
 			querySpecification.ApplyOrderBy(sd => sd.Name);
 			return Ok(_mapper.Map<IEnumerable<SensitiveDatum>,
 				IEnumerable<SensitiveDatumDto>>(_repository.GetEnumerable(querySpecification)));
@@ -63,7 +37,6 @@ namespace RlsDemo.Web.Controllers
 		{
 			var entityType = _mapper.Map<SensitiveDatumType>(type);
 			var querySpecification = new BaseQuerySpecification<SensitiveDatum>();
-			querySpecification.AddInclude(sd => sd.Tenant);
 			querySpecification.ApplyOrderBy(sd => sd.Name);
 			return Ok(_mapper.Map<IEnumerable<SensitiveDatum>, IEnumerable<SensitiveDatumDto>>(_repository.GetEnumerable(querySpecification, sd => sd.Type == entityType)));
 		}
@@ -83,9 +56,6 @@ namespace RlsDemo.Web.Controllers
 		public ActionResult<SensitiveDatumDto> Post([FromBody] SensitiveDatumDto datum)
 		{
 			var entity = _mapper.Map<SensitiveDatum>(datum);
-			if (entity.TenantId != (int)(HttpContext.Items["TenantId"]))
-				return Unauthorized();
-
 			_repository.Create(entity);
 			return Ok(_mapper.Map<SensitiveDatumDto>(entity));
 		}

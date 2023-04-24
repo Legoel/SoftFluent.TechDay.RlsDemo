@@ -1,84 +1,8 @@
-﻿using System.Data.Common;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Diagnostics;
+﻿using Microsoft.EntityFrameworkCore;
 using RlsDemo.Context.Model;
-using Softfluent.Asapp.Core.Context;
 
 namespace RslDemo.Context
 {
-	public class TenantFilterDbInterceptor : DbCommandInterceptor
-	{
-		private readonly CallContext _context;
-
-		public TenantFilterDbInterceptor(CallContext context)
-		{
-			_context = context;
-		}
-
-		public override ValueTask<InterceptionResult<DbDataReader>> ReaderExecutingAsync(
-			DbCommand command,
-			CommandEventData eventData,
-			InterceptionResult<DbDataReader> result,
-			CancellationToken cancellationToken = default)
-		{
-			command.CommandText =
-				$"EXEC sp_set_session_context @key=N'TenantId', @value=N'{_context.TenantId}';" +
-				$"{command.CommandText}";
-			return base.ReaderExecutingAsync(command, eventData, result, cancellationToken);
-		}
-
-		public override InterceptionResult<DbDataReader> ReaderExecuting(
-			DbCommand command,
-			CommandEventData eventData,
-			InterceptionResult<DbDataReader> result)
-		{
-			command.CommandText =
-				$"EXEC sp_set_session_context @key=N'TenantId', @value={_context.TenantId};" +
-				$"{command.CommandText}";
-			return base.ReaderExecuting(command, eventData, result);
-		}
-	}
-	public class SetTenantInterceptor : SaveChangesInterceptor
-	{
-		private readonly CallContext _context;
-
-		public SetTenantInterceptor(CallContext context)
-		{
-			_context = context;
-		}
-
-		public override ValueTask<InterceptionResult<int>> SavingChangesAsync(DbContextEventData eventData, InterceptionResult<int> result, CancellationToken cancellationToken = default)
-		{
-			if (eventData.Context is null)
-				return base.SavingChangesAsync(eventData, result, cancellationToken);
-
-			foreach (var entry in eventData.Context.ChangeTracker.Entries())
-			{
-				if (entry.Entity is ITenantEntity)
-				{
-					entry.GetTenantId()!.CurrentValue = _context.TenantId;
-				}
-			}
-			return base.SavingChangesAsync(eventData, result, cancellationToken);
-		}
-
-		public override InterceptionResult<int> SavingChanges(DbContextEventData eventData, InterceptionResult<int> result)
-		{
-			if (eventData.Context is null)
-				return base.SavingChanges(eventData, result);
-
-			foreach (var entry in eventData.Context.ChangeTracker.Entries())
-			{
-				if (entry.Entity is ITenantEntity)
-				{
-					entry.GetTenantId()!.CurrentValue = _context.TenantId;
-				}
-			}
-			return base.SavingChanges(eventData, result);
-		}
-	}
-
-
 	public partial class RlsDemoContext : DbContext
 	{
 		public RlsDemoContext(DbContextOptions<RlsDemoContext> options)
@@ -86,9 +10,9 @@ namespace RslDemo.Context
 		{
 		}
 
-        public int ContextTenantId { get; set; }
+		public int ContextTenantId { get; set; }
 
-        public virtual DbSet<Tenant> Tenants { get; set; }
+		public virtual DbSet<Tenant> Tenants { get; set; }
 
 		public virtual DbSet<SensitiveDatum> SensitiveData { get; set; }
 

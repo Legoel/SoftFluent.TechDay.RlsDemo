@@ -15,13 +15,16 @@ var configuration = builder.Configuration;
 
 // Add services to the container.
 builder.Services.AddScoped<TenantFilterDbInterceptor>();
+builder.Services.AddScoped<TenantBlockDbInterceptor>();
 builder.Services.AddDbContext<RlsDemoContext>((provider, options) =>
 {
 	options.UseSqlServer(configuration.GetConnectionString(Environment.MachineName));
 	options.EnableSensitiveDataLogging();
 	options.AddInterceptors(provider.GetRequiredService<TenantFilterDbInterceptor>());
+	options.AddInterceptors(provider.GetRequiredService<TenantBlockDbInterceptor>());
 });
-// Add Asapp repository
+
+// Add Asapp repository and execution context
 builder.Services.AddBaseRepository().AddExecutionContext();
 
 // Add Controllers and OpenApi
@@ -78,6 +81,7 @@ builder.Services.AddAuthentication(configure =>
 			ValidateAudience = false
 		};
 	});
+
 // Add AutoMapper
 builder.Services.AddAutoMapper(typeof(AutoMapperConfiguration));
 
@@ -103,7 +107,6 @@ app.UseHttpsRedirection();
 // Configure Authentification
 app.UseAuthentication();
 app.UseAuthorization();
-
 app.MapControllers().RequireAuthorization();
 
 app.Run();
