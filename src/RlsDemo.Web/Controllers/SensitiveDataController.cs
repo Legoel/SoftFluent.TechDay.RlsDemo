@@ -10,6 +10,7 @@ namespace RlsDemo.Web.Controllers
 	[TypeFilter(typeof(ContextTenantActionFilter))]
 	[ApiController]
 	[Route("[controller]")]
+	[TypeFilter(typeof(UserContexteActionFilter))]
 	public class SensitiveDataController : ControllerBase
 	{
 		private readonly IBaseRepository<RlsDemoContext> _repository;
@@ -66,7 +67,7 @@ namespace RlsDemo.Web.Controllers
 		{
 			var entity = _mapper.Map<SensitiveDatum>(datum);
 
-			var result = _repository.Update(entity);
+			var result = _repository.Update(entity, sd => sd.Identifier == id);
 			if (result == 0)
 				return NotFound();
 

@@ -1,5 +1,6 @@
 using System.Text;
 using System.Text.Json.Serialization;
+using Afdec.OptiqFluent.Context;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -94,7 +95,7 @@ if (app.Environment.IsDevelopment())
 	var context = scope.ServiceProvider.GetRequiredService<RlsDemoContext>();
 	context.Database.EnsureDeleted();
 	context.Database.EnsureCreated();
-	foreach(string batch in RlsDemoContext.GetSecurityScript())
+	foreach (string batch in RlsDemoContext.GetSecurityScript())
 	{
 		context.Database.ExecuteSqlRaw(batch);
 	}

@@ -31,7 +31,7 @@ namespace RlsDemo.Web.Controllers
 			{
 				Login = login,
 				ExpiresOn = expiresOn,
-				Roles = new[] { role },
+				Roles = new [] { role },
 				TenantId = tenant,
 			};
 
