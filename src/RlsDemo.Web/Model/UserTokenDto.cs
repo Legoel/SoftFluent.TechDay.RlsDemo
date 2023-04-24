@@ -7,6 +7,5 @@
 		public int TenantId { get; set; }
 		public DateTime ExpiresOn { get; set; }
 		public IEnumerable<string> Roles { get; set; } = new List<string>();
-		public int TenantId { get; set; }
 	}
 }
