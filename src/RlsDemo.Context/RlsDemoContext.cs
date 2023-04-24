@@ -3,7 +3,7 @@ using RlsDemo.Context.Model;
 
 namespace RslDemo.Context
 {
-    public partial class RlsDemoContext : DbContext
+	public partial class RlsDemoContext : DbContext
 	{
 		public int CurrentTenantId { get; set; }
 
@@ -11,6 +11,8 @@ namespace RslDemo.Context
 			: base(options)
 		{
 		}
+
+		public int ContextTenantId { get; set; }
 
 		public virtual DbSet<Tenant> Tenants { get; set; }
 
@@ -39,7 +41,6 @@ namespace RslDemo.Context
 
 			EnsureData(modelBuilder);
 		}
-
 		public static IEnumerable<string> GetSecurityScript()
 		{
 			yield return "DROP SECURITY POLICY IF EXISTS [Security].[SensitiveDataFilter]";

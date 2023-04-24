@@ -2,15 +2,15 @@
 using Microsoft.EntityFrameworkCore.Diagnostics;
 using Softfluent.Asapp.Core.Context;
 
-namespace Afdec.OptiqFluent.Context
+namespace RslDemo.Context
 {
 	public class TenantFilterDbInterceptor : DbCommandInterceptor
 	{
-		private readonly CallContext _callContext;
+		private readonly CallContext _context;
 
-		public TenantFilterDbInterceptor(CallContext callContext)
+		public TenantFilterDbInterceptor(CallContext context)
 		{
-			_callContext = callContext;
+			_context = context;
 		}
 
 		public override ValueTask<InterceptionResult<DbDataReader>> ReaderExecutingAsync(
@@ -20,7 +20,7 @@ namespace Afdec.OptiqFluent.Context
 			CancellationToken cancellationToken = default)
 		{
 			command.CommandText =
-				$"EXEC sp_set_session_context @key=N'TenantId', @value=N'{_callContext.TenantId}';" +
+				$"EXEC sp_set_session_context @key=N'TenantId', @value={_context.TenantId};" +
 				$"{command.CommandText}";
 			return base.ReaderExecutingAsync(command, eventData, result, cancellationToken);
 		}
@@ -31,7 +31,7 @@ namespace Afdec.OptiqFluent.Context
 			InterceptionResult<DbDataReader> result)
 		{
 			command.CommandText =
-				$"EXEC sp_set_session_context @key=N'TenantId', @value={_callContext.TenantId};" +
+				$"EXEC sp_set_session_context @key=N'TenantId', @value={_context.TenantId};" +
 				$"{command.CommandText}";
 			return base.ReaderExecuting(command, eventData, result);
 		}

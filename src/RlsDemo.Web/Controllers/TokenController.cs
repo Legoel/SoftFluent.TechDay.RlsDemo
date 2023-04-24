@@ -1,8 +1,7 @@
-﻿using Microsoft.AspNetCore.Authorization;
-using System.IdentityModel.Tokens.Jwt;
+﻿using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
-using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
 using RlsDemo.Context.Model;
@@ -23,7 +22,7 @@ namespace RlsDemo.Web.Controllers
 		[HttpGet]
 		public ActionResult<UserTokenDto> GetToken(string name)
 		{
-			var expiresOn = DateTime.UtcNow.AddMinutes(_configuration.GetValue("Authentication:JwtToken:Expiration", 60));
+			var expiresOn = DateTime.UtcNow.AddDays(_configuration.GetValue("Authentication:JwtToken:Expiration", 10));
 			var role = GetRole(name);
 			var login = $"{name} {role.ToUpper()}";
 			var tenant = GetTenant(name);
@@ -33,7 +32,7 @@ namespace RlsDemo.Web.Controllers
 				Login = login,
 				ExpiresOn = expiresOn,
 				Roles = new [] { role },
-				TenantId = tenant
+				TenantId = tenant,
 			};
 
 			var tokenHandler = new JwtSecurityTokenHandler();
@@ -65,19 +64,19 @@ namespace RlsDemo.Web.Controllers
 			return name switch
 			{
 				"Thomas" => 1,
-				"Maxime" => 2,
+				"Pierre" => 2,
 				_ => 3,
 			};
 		}
 
-		private static IEnumerable<Claim> GetClaims(string login, string role, int tenantId)
+		private static IEnumerable<Claim> GetClaims(string login, string role, int tenant)
 		{
 			var claims = new List<Claim>
 			{
 				new Claim(ClaimTypes.NameIdentifier, login),
 				new Claim(ClaimTypes.Name, login),
 				new Claim(ClaimTypes.Role, role),
-				new Claim("TenantId", tenantId.ToString())
+				new Claim("TenantId", tenant.ToString())
 			};
 
 			return claims;

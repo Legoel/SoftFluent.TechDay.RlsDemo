@@ -7,6 +7,7 @@ using Softfluent.Asapp.Core.Data;
 
 namespace RlsDemo.Web.Controllers
 {
+	[TypeFilter(typeof(ContextTenantActionFilter))]
 	[ApiController]
 	[Route("[controller]")]
 	[TypeFilter(typeof(UserContexteActionFilter))]
@@ -27,9 +28,9 @@ namespace RlsDemo.Web.Controllers
 		public ActionResult<IEnumerable<SensitiveDatumDto>> GetAll()
 		{
 			var querySpecification = new BaseQuerySpecification<SensitiveDatum>();
-			querySpecification.AddInclude(sd => sd.Tenant);
 			querySpecification.ApplyOrderBy(sd => sd.Name);
-			return Ok(_mapper.Map<IEnumerable<SensitiveDatum>, IEnumerable<SensitiveDatumDto>>(_repository.GetEnumerable(querySpecification)));
+			return Ok(_mapper.Map<IEnumerable<SensitiveDatum>,
+				IEnumerable<SensitiveDatumDto>>(_repository.GetEnumerable(querySpecification)));
 		}
 
 		[HttpGet("type/{type}")]
@@ -37,7 +38,6 @@ namespace RlsDemo.Web.Controllers
 		{
 			var entityType = _mapper.Map<SensitiveDatumType>(type);
 			var querySpecification = new BaseQuerySpecification<SensitiveDatum>();
-			querySpecification.AddInclude(sd => sd.Tenant);
 			querySpecification.ApplyOrderBy(sd => sd.Name);
 			return Ok(_mapper.Map<IEnumerable<SensitiveDatum>, IEnumerable<SensitiveDatumDto>>(_repository.GetEnumerable(querySpecification, sd => sd.Type == entityType)));
 		}
